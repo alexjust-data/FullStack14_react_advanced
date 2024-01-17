@@ -1,6 +1,11 @@
-import withFetch from './withFetch';
+import useFetch from '../../../react-advanced/src/useFetch';
 
-function Teams({ data: teams, color }) {
+
+export default function Teams({ color }) {
+  const { data: teams, isFetching, error } = useFetch({
+    initialData: [],
+    url: 'https://www.balldontlie.io/api/v1/teams'
+  })
   return (
     <div style={ {color} }>
       <h2>Teams</h2>
@@ -13,10 +18,3 @@ function Teams({ data: teams, color }) {
     </div>
   );
 }
-
-const TeamsWithFetch = withFetch({
-  initialData: [],
-  url: 'https://www.balldontlie.io/api/v1/teams',
-})(Teams);
-
-export default TeamsWithFetch;

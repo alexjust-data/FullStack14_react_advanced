@@ -680,12 +680,203 @@ Ahora has de modificar `Teams` y `Players`
 
 ```js
 ...
-const PlayersWithFetch = withFetch({
+
+const withFetchConfig = withFetch({
   initialData: [],
   url: 'https://www.balldontlie.io/api/v1/players',
-})(Players);
+});
+
+const PlayersWithFetch = withFetchConfig(Players)
 
 export default PlayersWithFetch;
+```
+
+
+## Creando nuestros propios hooks
+
+En el contexto de JavaScript, especialmente en relación con React, un "hook" es una característica especial que permite a los componentes funcionales de React tener acceso a características que antes solo estaban disponibles en los componentes de clase. Los hooks son una parte esencial de React moderno y han permitido a los desarrolladores escribir componentes más expresivos y eficientes, facilitando la gestión del estado y el ciclo de vida de los componentes.
+
+Beneficios de los Hooks
+
+* Simplificación de Componentes: Permiten escribir componentes más limpios y legibles, evitando la necesidad de clases para cosas como el estado y los efectos secundarios.
+* Reutilización de Lógica de Estado: Facilitan la reutilización de lógica de estado entre componentes sin necesidad de componentes de orden superior (HOCs) o render props.
+* Organización del Código: Mejoran la organización del código, agrupando lógica relacionada de manera más natural que los métodos de ciclo de vida en componentes de clase.
+
+
+Tipos Principales de Hooks en React
+
+* useState : Permite a los componentes funcionales tener su propio estado local. Antes de los hooks, solo los componentes de clase podían tener estado local.
+
+* useEffect : Permite a los componentes funcionales ejecutar efectos secundarios, como solicitudes de datos, suscripciones o manipulaciones del DOM manualmente, similar a los métodos de ciclo de vida en componentes de clase como componentDidMount, componentDidUpdate, y componentWillUnmount.
+
+* useContext : Permite a los componentes funcionales acceder al contexto de React sin tener que utilizar un Consumer.
+
+* useReducer : Ofrece una alternativa a useState para manejar estados complejos mediante un reductor (reducer).
+
+* useRef : Permite a los componentes funcionales acceder y interactuar con nodos del DOM y guardar referencias a valores mutables que no causan re-renderizados cuando cambian.
+
+* useMemo y useCallback : useMemo se usa para memorizar valores costosos de calcular.
+useCallback memoriza funciones para evitar re-creaciones innecesarias en re-renderizados.
+
+> [!WARNING]
+> Continuamos con el codigo
+
+
+Me creo `useFetch.js`
+
+```js
+export default function useFetch({ initialData, url }) {
+
+}
+```
+dentro vamos a meter toda la lógica de `Fetch.jsx` simplificando cosas. Fíjate que un `customHook` lo que no puede hacer es renderizar cosas, pero si podemos devolver cosas como un objeto que tenga la data `isFetching, error`
+
+```js
+import { useEffect, useState } from 'react';
+
+export default function useFetch({ initialData, url }) {
+  const [data, setData] = useState(initialData);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setIsFetching(true);
+    setError(null);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Oooops');
+        }
+        return response.json();
+      })
+      .then(result => setData(result.data))
+      .catch(error => setError(error))
+      .finally(() => {
+        setIsFetching(false);
+      });
+  }, [url]);
+
+  return { data, isFetching, error };
+}
+
+```
+
+Has creado la funcion que tiene que toda la logica de mantener el estado de `data, isFetching, error` y ejecutar el `useEffect` para inicializar el `fetch` y devuelve esto `return { data, isFetching, error };` para trabajar luego.
+
+¿como se usa esto? Me voy al componente `Teams` por ejemplo
+
+```js
+import useFetch from '../../../react-advanced/src/useFetch';
+
+
+export default function Teams({ color }) {
+  const { data: teams, isFetching, error } = useFetch({
+    initialData: [],
+    url: 'https://www.balldontlie.io/api/v1/teams'
+  })
+  return (
+    <div style={ {color} }>
+      <h2>Teams</h2>
+        <ul>
+          {teams.map(team => (
+            <li key={team.id}
+            >{team.full_name}</li>
+          ))}
+        </ul>
+    </div>
+  );
+}
+```
+
+De esta forma estás utilizando el **hook** `Fetch` useFetch
+
+> [!NOTE]
+> MOCKEANDO API´s
+> minuto 3:23 video 1  
+> interesante api para trabajar  
+> www.mswjs.io API mocking for JS  
+> "Mockear" una API se refiere al proceso de simular una API real para propósitos de prueba o desarrollo.   
+
+Vamos a seguir lo pasos para usar esta api www.mswjs.io
+
+```sh
+npm install msw --save-dev
+
+# creará un archivo en la carpeta `public/`
+npx msw init public
+``` 
+
+me creo un modulo `src/mocks/browser`
+
+```js
+// src/mocks/browser.js
+import { setupWorker } from 'msw/browser';
+import { handlers } from './handlers';
+
+export const worker = setupWorker(...handlers);
+```
+
+
+
+```js
+import { HttpResponse, http } from 'msw';
+
+export const handlers = [
+  http.get('https://www.balldontlie.io/api/v1/teams', () => {
+    console.log('Intercepted');
+    return HttpResponse.json({
+      data: [
+        { id: 1, full_name: 'Boston Celtics - mock' },
+        { id: 2, full_name: 'Los Angeles Lakers - mock' },
+      ],
+    });
+  }),
+];
+
+```
+
+En main envolvemos la aplicación
+
+```js
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+```
+
+Esta función activa el mocking de API con MSW (Mock Service Worker) solo en el entorno de desarrollo.`import.meta.env.DEV` es verdadero cuando el proceso de construcción se ejecuta en modo de desarrollo. Esto asegura que MSW solo se inicie en desarrollo, evitando interferencias en producción.
+
+```js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
+
+
+// Esta función activa el mocking de API con MSW (Mock Service Worker) solo en el entorno de desarrollo.
+// `import.meta.env.DEV` es verdadero cuando el proceso de construcción se ejecuta en modo de desarrollo.
+// Esto asegura que MSW solo se inicie en desarrollo, evitando interferencias en producción.
+async function enableMocking() {
+  if (import.meta.env.DEV) {
+    const { worker } = await import('./mocks/browser');
+    return worker.start();
+  }
+}
+
+enableMocking().then(() => {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+});
 ```
 
 
