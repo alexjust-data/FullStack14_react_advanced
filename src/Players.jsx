@@ -14,11 +14,11 @@ function Players({ data: players }) {
   );
 }
 
-// llamo a withFetch pasándole el componete Teams y dos opciones
-const PlayerswithFetch = withFetch(Players, {
-  initialData: [], 
-  url: "https://www.balldontlie.io/api/v1/players"
+const withFetchConfig = withFetch({
+  initialData: [],
+  url: 'https://www.balldontlie.io/api/v1/players',
 });
 
+const PlayersWithFetch = withFetchConfig(Players)
 
-export default PlayerswithFetch;
+export default PlayersWithFetch;

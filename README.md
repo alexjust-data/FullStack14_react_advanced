@@ -616,3 +616,77 @@ export default function withFetch(WrappedComponent, { initialData, url }) {
     return WithFetchComponent;
 };
 ```
+
+> [!NOTE]
+> Dentro de la funcion de un componete nunce hemos de crear componentes. Sólo puedo crear elementos pero no componentes.
+
+Imaginate que tu tienes otro **Higher Order Component** que pinta la propiedad color, para que eso se pueda inyectar y hacer de una forma limpia y se pueda concatenar utilidades de programacion funcional como vite , es conveniente que el prámetro **Higher Order Component** se mantenga aislado (estamos hablando del `Players`)
+
+```js
+const PlayerswithFetch = withFetch(Players, {
+  initialData: [], 
+  url: "https://www.balldontlie.io/api/v1/players"
+});
+```
+Para ello he de conseguir que mi **Higher Order Component** sólo le pase este parámetro  `Players` ¿como le paso los otros? pues sobreescribimos de la siguente manera en `withFetch` envolviendo en una nueva funcion y exportando una funcion que va a crear internamoente una funcion que va a ser la que va a recibir el componente
+
+```js
+import { useEffect, useState } from 'react';
+
+// le paso primera la configuracion
+export default function withFetch({ initialData, url }) {
+  // envolvemos con una función externa este componente que queremos
+  return function (WrappedComponent) {
+    function WithFetchComponent(props) {
+      const [data, setData] = useState(initialData);
+      const [isFetching, setIsFetching] = useState(false);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        setIsFetching(true);
+        setError(null);
+
+        fetch(url)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Oooops');
+            }
+            return response.json();
+          })
+          .then(result => setData(result.data))
+          .catch(error => setError(error))
+          .finally(() => {
+            setIsFetching(false);
+          });
+      }, []);
+
+      if (isFetching) {
+        return <div>Loading...</div>;
+      }
+      if (error) {
+        return <div>Ooops, there was an error!!!</div>;
+      }
+
+      return <WrappedComponent data={data} {...props} />;
+    }
+    return WithFetchComponent;
+  };
+}
+
+```
+Es decir, cuando hayas de escribir un **Higher Order Component** que le tangas que pasar determinado parametro a parte hazlo así.
+
+Ahora has de modificar `Teams` y `Players`
+
+```js
+...
+const PlayersWithFetch = withFetch({
+  initialData: [],
+  url: 'https://www.balldontlie.io/api/v1/players',
+})(Players);
+
+export default PlayersWithFetch;
+```
+
+
+

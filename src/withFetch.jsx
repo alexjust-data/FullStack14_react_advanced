@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-export default function withFetch(WrappedComponent, { initialData, url }) {
-
+export default function withFetch({ initialData, url }) {
+  return function (WrappedComponent) {
     function WithFetchComponent(props) {
       const [data, setData] = useState(initialData);
       const [isFetching, setIsFetching] = useState(false);
@@ -34,6 +34,6 @@ export default function withFetch(WrappedComponent, { initialData, url }) {
 
       return <WrappedComponent data={data} {...props} />;
     }
-    
     return WithFetchComponent;
-};
+  };
+}
