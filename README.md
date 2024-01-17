@@ -273,7 +273,7 @@ Fíjate que hacen cosas diferentes Pero su lógica de funcionamiento interna, si
 ```
 es particular de casa caso el ¿qué hago con los datos y el estado de cada caso que me devuelve fetch? pues lo pinto, pero si me devuelve un objeto podría hacer algo más.
 
-## Tecnica 1 : renderProst
+## Tecnica 1 : Render Props
 
 Esta técnica es pasar una funcion como props(atributo) que sirve para renderizarlo.
 
@@ -376,5 +376,243 @@ export default function Players() {
 }
 ```
 
+## Técnica 2 :  Higher Order Component
+
+**Las Higher Order Functions (HOF)**, o Funciones de Orden Superior en español, es una función que cumple al menos una de las siguientes condiciones:
+
+* Acepta Funciones como Argumentos: Una HOF puede recibir una o más funciones como argumentos. Esto permite crear funciones más abstractas y reutilizables que pueden modificar o ampliar el comportamiento de otras funciones.
+
+* Retorna una Función: Una HOF también puede devolver una función como resultado. Esto permite crear funciones que crean otras funciones, lo que puede ser útil para encapsular ciertos comportamientos o crear funciones con configuraciones personalizadas.
+
+**Higher Order Component (HOC)**, o Componente de Orden Superior en español, es un patrón avanzado en React para reutilizar la lógica de componentes. Un HOC es una función que toma un componente y devuelve un nuevo componente. Los HOCs son comunes en bibliotecas de React y en aplicaciones React para extender o modificar el comportamiento de un componente existente de manera reutilizable.
+
+* Es una Función: Un HOC es una función que acepta un componente como argumento.
+
+* Devuelve un Nuevo Componente: El HOC procesa el componente entrante, posiblemente agregándole funcionalidades o modificando su comportamiento, y luego devuelve un nuevo componente.
+
+* Composición sobre Herencia: En React, se prefiere la composición sobre la herencia para reutilizar el código entre componentes. Los HOC son una forma de realizar esta composición.
+
+* No Modifica el Componente Original: Un HOC crea un nuevo componente sin modificar el componente original. Esto mantiene los componentes separados y promueve la reutilización del código.
 
 
+Ahora vamos a crear un Higher Order Component para que se ocupe de la loginca de fecth y luego vamos a refectorizar todos nuestros componentes para que lo utilice este Higher Order Component.
+
+Creamos `withFetch.jsx` es cnovención llamarlo con `with...` delante
+
+```js
+import { useEffect, useState } from 'react';
+
+// recibe un componente
+export default function withFetch(WrappedComponent, { initialData, url }) {
+  // creo y retorna un componente
+  // cuendo llames a withFetch tendrás esta composición a la vuelta
+  function WithFetchComponent(props) {
+
+
+    return WithFetchComponent;
+  };
+}
+```
+
+Puedes ver como en Teams le digo que retorne con un componente de entrada
+
+```js
+import Fetch from './Fetch';
+import withFetch from './withFetch';
+
+function Teams() {
+  return (
+    <div>
+      <h2>Teams</h2>
+      <Fetch
+        initialData={[]}
+        url= "https://www.balldontlie.io/api/v1/teams"
+        renderData={data => {
+          return (
+            <ul>
+              {data.map(team => (
+                <li key={team.id}
+                >{team.full_name}</li>
+              ))}
+            </ul>
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+// llamo a withFetch pasándole Teams
+const TeamswithFetch = withFetch(Teams);
+
+export default TeamswithFetch;
+```
+
+
+Entonces, vamos a merter toda la lógica del `<Fetch` inyectándole una propiedad **data** en `function Teams(data) {` para utilizarla y renderizar lo que quieras. Vamos hacer eso y envovler lo componente para inyectar al adata que se resuelva en ese fetch.
+
+```js
+import { useEffect, useState } from 'react';
+
+export default function withFetch(WrappedComponent, { initialData, url }) {
+    function WithFetchComponent(props) {
+      const [data, setData] = useState(initialData);
+      const [isFetching, setIsFetching] = useState(false);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        setIsFetching(true);
+        setError(null);
+
+        fetch(url)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Oooops');
+            }
+            return response.json();
+          })
+          .then(result => setData(result.data))
+          .catch(error => setError(error))
+          .finally(() => {
+            setIsFetching(false);
+          });
+      }, []);
+
+      if (isFetching) {
+        return <div>Loading...</div>;
+      }
+      if (error) {
+        return <div>Ooops, there was an error!!!</div>;
+      }
+
+      return <WrappedComponent data={data} {...props} />;
+    }
+    return WithFetchComponent;
+};
+```
+
+Todo lo que envuelvas con este componente `<WrappedComponent data={data} {...props} />;` estará haciendo lo mismo que el propio coponente pero recbiento una prop¡edad extra llamada data.
+
+
+
+```js
+import withFetch from './withFetch';
+
+function Teams({ data: teams }) {
+  return (
+    <div>
+      <h2>Teams</h2>
+        <ul>
+          {teams.map(team => (
+            <li key={team.id}
+            >{team.full_name}</li>
+          ))}
+        </ul>
+    </div>
+  );
+}
+
+// llamo a withFetch pasándole el componete Teams y dos opciones
+const TeamswithFetch = withFetch(Teams, {
+  initialData: [], 
+  url: "https://www.balldontlie.io/api/v1/teams"
+});
+
+export default TeamswithFetch;
+```
+
+Fíjate que con estas lineas vemos que se crea el componente 1 vez sólamente
+
+
+```js
+const TeamswithFetch = withFetch(Teams, {
+  initialData: [], 
+  url: "https://www.balldontlie.io/api/v1/teams"
+});
+```
+
+> [!NOTE]
+> Esta es la principal diferencia con **Tecnica 1 : Render Props** que es totalmente dinámico porque funciona por componentes y props. y **Técnica 2 :  Higher Order Component** es estático.
+
+
+`Players`
+
+```js
+import withFetch from './withFetch';
+
+
+function Players({ data: players }) {
+  return (
+    <div>
+      <h2>Players</h2>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>{`${player.first_name} ${player.last_name}`}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// llamo a withFetch pasándole el componete Teams y dos opciones
+const PlayerswithFetch = withFetch(Players, {
+  initialData: [], 
+  url: "https://www.balldontlie.io/api/v1/players"
+});
+
+
+export default PlayerswithFetch;
+```
+
+Fíjate que toda la lógica de los componentes ahora están en `WithFetchComponent` que hemos declarado en nuestro **Higher Order Component**
+
+![](public/img/1.png)
+
+UN probelma que tienen los Higher Order Component es que si le quiero pasar una propiedad desde fuera a por ejemplo `<Teams color="red" />` de App
+
+Le pasaríamos a Temas el color como atributo para pintar el stylo
+
+```js
+function Teams({ data: teams, color }) {
+  return (
+    <div style={ {color} }>
+      <h2>Teams</h2>
+```
+
+Tendrías que pasarle al componente esta propiedad colors
+
+```js
+export default function withFetch(WrappedComponent, { initialData, url }) {
+
+    function WithFetchComponent({ color }) {
+      const [data, setData] = useState(initialData);
+      const [isFetching, setIsFetching] = useState(false);
+      const [error, setError] = useState(null);
+
+  ...
+
+      return <WrappedComponent data={data} color={color} />;
+    }
+    
+    return WithFetchComponent;
+};
+```
+
+Así llega a su destino, pero `function WithFetchComponent()` no tiene nada que decir sobre las propiedades que reciba entonces **que las deje pasar** así:
+
+```js
+export default function withFetch(WrappedComponent, { initialData, url }) {
+
+    function WithFetchComponent( props ) {
+      const [data, setData] = useState(initialData);
+      const [isFetching, setIsFetching] = useState(false);
+      const [error, setError] = useState(null);
+
+  ...
+      // el orden es importante porque el componente se sobreescribe
+      return <WrappedComponent data={data} {...props} />;
+    }
+    
+    return WithFetchComponent;
+};
+```

@@ -1,23 +1,23 @@
-import Fetch from './Fetch';
+import withFetch from './withFetch';
 
-export default function Teams() {
+function Teams({ data: teams, color }) {
   return (
-    <div>
+    <div style={ {color} }>
       <h2>Teams</h2>
-      <Fetch
-        initialData={[]}
-        url= "https://www.balldontlie.io/api/v1/teams"
-        renderData={data => {
-          return (
-            <ul>
-              {data.map(team => (
-                <li key={team.id}
-                >{team.full_name}</li>
-              ))}
-            </ul>
-          );
-        }}
-      />
+        <ul>
+          {teams.map(team => (
+            <li key={team.id}
+            >{team.full_name}</li>
+          ))}
+        </ul>
     </div>
   );
 }
+
+// llamo a withFetch pasándole el componete Teams y dos opciones
+const TeamswithFetch = withFetch(Teams, {
+  initialData: [], 
+  url: "https://www.balldontlie.io/api/v1/teams"
+});
+
+export default TeamswithFetch;
