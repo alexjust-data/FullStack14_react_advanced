@@ -261,3 +261,120 @@ export default App
 
 Fíjate que hacen cosas diferentes Pero su lógica de funcionamiento interna, si las ponemos una frente a otro, son muy parecidas. De hecho, he creado 1 he hecho un copyright y me crea el siguiente, y he tenido que que adaptar algunas cosas de acuerdo, bueno, pues sería interesante si podemos extraer lo que tienen en común: estos 2 componentes y poderlo utilizarlo y luego crear ser con ello capaces de crear un componenteTeams que utiliza esa abstracción para pintar los equipos y un componente players que utiliza esa abstracción para crear los equipos.Tenemos varias técnicas, como he dicho al principio, vamos a poder, por ejemplo, hacer Hyer del Components. Vamos a hacer.Vamos a poder hacer render Probs. Vamos a poder hacer custo hooks. 
 
+* ¿cómo vamos a extraer aun componente toda la lógica del `fetch` (conectarse a datos, traer, manejar el estado)?
+* ¿qué es lo que es particular a cada caso ? pues esto
+
+```js
+        <ul>
+            {teams.map(team => (
+                <li key={team.id}>{team.full_name}</li>
+            ))}
+        </ul>
+```
+es particular de casa caso el ¿qué hago con los datos y el estado de cada caso que me devuelve fetch? pues lo pinto, pero si me devuelve un objeto podría hacer algo más.
+
+## Tecnica 1 : renderProst
+
+Esta técnica es pasar una funcion como props(atributo) que sirve para renderizarlo.
+
+Sacaremos lo comun y delegamos la parte de pintar lo delegamos a los componentes.  
+Me creo componente `Fetch.js` nos interesa lo que va a ser comun, me copio y pego `Teams` por ejemplo
+
+
+```js
+import { useEffect, useState } from 'react';
+
+
+// le paso los props/atributos para que sea más generico
+export default function Fetch({initialData, url, renderData}) {
+  const [data, setData] = useState(initialData);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setIsFetching(true);
+    setError(null);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Oooops');
+        }
+        return response.json();
+      })
+      .then(result => setData(result.data))
+      .catch(error => setError(error))
+      .finally(() => {
+        setIsFetching(false);
+      });
+  }, [url]);
+
+  if (isFetching) {
+    return <div>Loading...</div>;
+  }
+  if (error) {
+    return <div>Ooops, there was an error!!!</div>;
+  }
+
+  return renderData(data);
+}
+```
+
+Y ahora vamos a sustituir en `Teams` todo lo que ahora ya tengo aquí y me quedaría así:
+
+```js
+import Fetch from './Fetch';
+
+export default function Teams() {
+  return (
+    <div>
+      <h2>Teams</h2>
+      <Fetch
+        initialData={[]}
+        url= "https://www.balldontlie.io/api/v1/teams"
+        renderData={data => {
+          return (
+            <ul>
+              {data.map(team => (
+                <li key={team.id}
+                >{team.full_name}</li>
+              ))}
+            </ul>
+          );
+        }}
+      />
+    </div>
+  );
+}
+```
+
+`Players`
+
+```js
+import Fetch from './Fetch';
+
+export default function Players() {
+  return (
+    <div>
+      <h2>Players</h2>
+      <Fetch
+        initialData={[]}
+        url= "https://www.balldontlie.io/api/v1/players"
+        renderData={data => {
+          return (
+            <ul>
+              {data.map(player => (
+                <li key={player.id}
+                >{`${player.first_name} ${player.last_name}`}</li>
+              ))}
+            </ul>
+          );
+        }}
+      />
+    </div>
+  );
+}
+```
+
+
+

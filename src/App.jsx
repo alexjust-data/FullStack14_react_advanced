@@ -1,14 +1,14 @@
-//  me quedo con esto
 import Teams from './Teams';
 import Players from './Players';
 
-function App(){
+function App() {
   return (
     <>
-        <Teams />
-        <Players />
+      <Teams color="red" />
+      <Players />
     </>
   );
 }
 
-export default App
+export default App;
+
