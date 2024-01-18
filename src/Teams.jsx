@@ -1,5 +1,5 @@
 import useFetch from '../../../react-advanced/src/useFetch';
-
+import List from './List';
 
 export default function Teams({ color }) {
   const { data: teams, isFetching, error } = useFetch({
@@ -9,12 +9,11 @@ export default function Teams({ color }) {
   return (
     <div style={ {color} }>
       <h2>Teams</h2>
-        <ul>
-          {teams.map(team => (
-            <li key={team.id}
-            >{team.full_name}</li>
-          ))}
-        </ul>
+      <List 
+        data={teams} 
+        renderItem={team => team.full_name}
+        getKey={item => item.id} 
+      />
     </div>
   );
 }

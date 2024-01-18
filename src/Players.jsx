@@ -1,15 +1,17 @@
 import withFetch from './withFetch';
+import List from './List';
 
 
 function Players({ data: players }) {
   return (
     <div>
       <h2>Players</h2>
-      <ul>
-        {players.map(player => (
-          <li key={player.id}>{`${player.first_name} ${player.last_name}`}</li>
-        ))}
-      </ul>
+      <List 
+        data={players} 
+        renderItem={player => player.first_name + ' ' + player.last_name}
+        getKey={player => player.id} 
+        listComponent='ol'
+      />
     </div>
   );
 }

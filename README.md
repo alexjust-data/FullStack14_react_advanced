@@ -692,7 +692,12 @@ export default PlayersWithFetch;
 ```
 
 
-## Creando nuestros propios hooks
+## Técnica 3 : Creando nuestros propios hooks
+
+> [!NOTE] 
+> Harás Customs Hooks a diario.  
+> Para cualquier cosa que veas que sea un trozo de lógica de un componente que se está repitiendo en dos componentes, pues ya puedes pensar "esto lo saco en un customHook y lo reutilizo".  
+> Pero si es verdad que las dos técnicas anteriores las verás seguramente igual (aunque se usen menos).  
 
 En el contexto de JavaScript, especialmente en relación con React, un "hook" es una característica especial que permite a los componentes funcionales de React tener acceso a características que antes solo estaban disponibles en los componentes de clase. Los hooks son una parte esencial de React moderno y han permitido a los desarrolladores escribir componentes más expresivos y eficientes, facilitando la gestión del estado y el ciclo de vida de los componentes.
 
@@ -879,5 +884,102 @@ enableMocking().then(() => {
 });
 ```
 
+
+---
+
+**Ejemplos :**
+
+**Tecnica 1 : Vamos hacer un componente vista usando RenderProps**
+
+En `Teams` tenemos una **lista** y podemos extraerlo a un Render Prop
+
+```js
+        <ul>
+          {teams.map(team => (
+            <li key={team.id}
+            >{team.full_name}</li>
+          ))}
+        </ul>
+```
+Puedes ver cómo React trabaja para crear vistas de una lista:  
+
+https://reactnative.dev/docs/using-a-listview   
+
+Al final es hacer un poco lo mismo. Creamos componente `List.jsx`
+
+```js
+export default function List({
+  data, // la data la pasa quien está llamando el componente
+  renderItem, // pásale una función que renderice el contenido del item
+  getKey, // pásale una función que de el id a la key
+  listComponent = 'ul',
+}) {
+  const Component = listComponent;
+
+  return (
+    <Component>
+      {data.map(item => (
+        <li key={getKey(item)}>{renderItem(item)}</li>
+      ))}
+    </Component>
+  );
+}
+```
+
+Ahora podemos ir al componente `Teams` y darle el componente
+
+```js
+import useFetch from '../../../react-advanced/src/useFetch';
+import List from './List';
+
+export default function Teams({ color }) {
+  const { data: teams, isFetching, error } = useFetch({
+    initialData: [],
+    url: 'https://www.balldontlie.io/api/v1/teams'
+  })
+  return (
+    <div style={ {color} }>
+      <h2>Teams</h2>
+      <List 
+        data={teams} 
+        renderItem={team => team.full_name}
+        getKey={item => item.id} 
+      />
+    </div>
+  );
+}
+``` 
+
+List no conoce el dato, sólo se encarga de la estructura.
+
+Ahora si queremos podemos refactorizar igual el componente `Players`
+
+```js
+import withFetch from './withFetch';
+import List from './List';
+
+
+function Players({ data: players }) {
+  return (
+    <div>
+      <h2>Players</h2>
+      <List 
+        data={players} 
+        renderItem={player => player.first_name + ' ' + player.last_name}
+        getKey={player => player.id} 
+      />
+    </div>
+  );
+}
+
+const withFetchConfig = withFetch({
+  initialData: [],
+  url: 'https://www.balldontlie.io/api/v1/players',
+});
+
+const PlayersWithFetch = withFetchConfig(Players)
+
+export default PlayersWithFetch;
+```
 
 
