@@ -982,4 +982,53 @@ const PlayersWithFetch = withFetchConfig(Players)
 export default PlayersWithFetch;
 ```
 
+Fíjate que el `List` lo has hecho de una forma que desde fuera lo puedes contruir por `ul` o como `ol`
+
+```js
+  listComponent = 'ul',
+}) {
+  const Component = listComponent;
+```
+
+```js
+function Players({ data: players }) {
+  return (
+    <div>
+      <h2>Players</h2>
+      <List 
+        data={players} 
+        renderItem={player => player.first_name + ' ' + player.last_name}
+        getKey={player => player.id} 
+        listComponent='ol'
+      />
+    </div>
+  );
+}
+```
+
+Ahora tienes la lista palyers como una 'ol' (ordenado o desordenado) controlas con props las vistas.
+
+
+## Redux
+
+continuamos con Redux desde este repositorio y abro la aplicacion
+
+* repo : https://github.com/alexjust-data/FullStack07_React_app_tweeter
+* repo teacher : https://github.com/KeepCodingWeb15/twitter-react
+
+Arranco Sparrest
+
+```sh
+➜  ~ cd /Users/alex/Desktop/sparrest 
+➜  sparrest git:(main) ✗ npm start
+
+> sparrest@1.0.0 start
+> node index.js
+
+JSON Server is running on port 8000
+
+```
+
+
+
 
