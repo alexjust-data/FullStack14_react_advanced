@@ -1013,8 +1013,7 @@ Ahora tienes la lista palyers como una 'ol' (ordenado o desordenado) controlas c
 
 continuamos con Redux desde este repositorio y abro la aplicacion
 
-* repo : https://github.com/alexjust-data/FullStack07_React_app_tweeter
-* repo teacher : https://github.com/KeepCodingWeb15/twitter-react
+* repo : https://github.com/alexjust-data/FullStack07_React_app_tweeter_REDUX.git
 
 Arranco Sparrest
 
